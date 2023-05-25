@@ -151,6 +151,39 @@ void wave5_vdi_free_dma_memory(struct vpu_device *vpu_dev, struct vpu_buf *vb)
 	memset(vb, 0, sizeof(*vb));
 }
 
+void wave5_vdi_allocate_sram(struct vpu_device *vpu_dev)
+{
+	struct vpu_buf *vb = &vpu_dev->sram_buf;
+
+	if (!vpu_dev->sram_pool || !vpu_dev->sram_size)
+		return;
+
+	if (!vb->vaddr) {
+		vb->size = vpu_dev->sram_size;
+		vb->vaddr = gen_pool_dma_alloc(vpu_dev->sram_pool, vb->size,
+					       &vb->daddr);
+		if (!vb->vaddr)
+			vb->size = 0;
+	}
+
+	dev_dbg(vpu_dev->dev, "%s: sram daddr: %pad, size: %zu, vaddr: 0x%p\n",
+		__func__, &vb->daddr, vb->size, vb->vaddr);
+}
+
+void wave5_vdi_free_sram(struct vpu_device *vpu_dev)
+{
+	struct vpu_buf *vb = &vpu_dev->sram_buf;
+
+	if (!vb->size || !vb->vaddr)
+		return;
+
+	if (vb->vaddr)
+		gen_pool_free(vpu_dev->sram_pool, (unsigned long)vb->vaddr,
+			      vb->size);
+
+	memset(vb, 0, sizeof(*vb));
+}
+
 unsigned int wave5_vdi_convert_endian(struct vpu_device *vpu_dev, unsigned int endian)
 {
 	if (PRODUCT_CODE_W_SERIES(vpu_dev->product_code)) {
@@ -175,56 +208,40 @@ unsigned int wave5_vdi_convert_endian(struct vpu_device *vpu_dev, unsigned int e
 
 static void byte_swap(unsigned char *data, size_t len)
 {
-	u8 temp;
 	unsigned int i;
 
-	for (i = 0; i < len; i += 2) {
-		temp = data[i];
-		data[i] = data[i + 1];
-		data[i + 1] = temp;
-	}
+	for (i = 0; i < len; i += 2)
+		swap(data[i], data[i + 1]);
 }
 
 static void word_swap(unsigned char *data, size_t len)
 {
-	u16 temp;
 	u16 *ptr = (u16 *)data;
 	unsigned int i;
 	size_t size = len / sizeof(uint16_t);
 
-	for (i = 0; i < size; i += 2) {
-		temp = ptr[i];
-		ptr[i] = ptr[i + 1];
-		ptr[i + 1] = temp;
-	}
+	for (i = 0; i < size; i += 2)
+		swap(ptr[i], ptr[i + 1]);
 }
 
 static void dword_swap(unsigned char *data, size_t len)
 {
-	u32 temp;
 	u32 *ptr = (u32 *)data;
 	size_t size = len / sizeof(u32);
 	unsigned int i;
 
-	for (i = 0; i < size; i += 2) {
-		temp = ptr[i];
-		ptr[i] = ptr[i + 1];
-		ptr[i + 1] = temp;
-	}
+	for (i = 0; i < size; i += 2)
+		swap(ptr[i], ptr[i + 1]);
 }
 
 static void lword_swap(unsigned char *data, size_t len)
 {
-	u64 temp;
 	u64 *ptr = (u64 *)data;
 	size_t size = len / sizeof(uint64_t);
 	unsigned int i;
 
-	for (i = 0; i < size; i += 2) {
-		temp = ptr[i];
-		ptr[i] = ptr[i + 1];
-		ptr[i + 1] = temp;
-	}
+	for (i = 0; i < size; i += 2)
+		swap(ptr[i], ptr[i + 1]);
 }
 
 static void wave5_swap_endian(struct vpu_device *vpu_dev, u8 *data, size_t len,
