@@ -730,7 +730,7 @@ static int wave5_vpu_dec_s_fmt_out(struct file *file, void *fh, struct v4l2_form
 	inst->quantization = f->fmt.pix_mp.quantization;
 	inst->xfer_func = f->fmt.pix_mp.xfer_func;
 
-	wave5_update_pix_fmt(&inst->dst_fmt, f->fmt.pix_mp.width, f->fmt.pix_mp.height);
+	wave5_update_pix_fmt(&inst->src_fmt, f->fmt.pix_mp.width, f->fmt.pix_mp.height);
 
 	return 0;
 }
