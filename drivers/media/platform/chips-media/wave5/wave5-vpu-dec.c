@@ -1115,10 +1115,10 @@ static int wave5_vpu_dec_start_streaming_open(struct vpu_instance *inst)
 		inst->conf_win_width = initial_info.pic_width - initial_info.pic_crop_rect.right;
 		inst->conf_win_height = initial_info.pic_height - initial_info.pic_crop_rect.bottom;
 
-		if(initial_info.pic_crop_rect.left != 0)
+		if (initial_info.pic_crop_rect.left != 0)
 			inst->conf_win_width = inst->conf_win_width - initial_info.pic_crop_rect.left;
 
-		if(initial_info.pic_crop_rect.top != 0)
+		if (initial_info.pic_crop_rect.top != 0)
 			inst->conf_win_height = inst->conf_win_height - initial_info.pic_crop_rect.top;
 
 		ctrl = v4l2_ctrl_find(&inst->v4l2_ctrl_hdl,
